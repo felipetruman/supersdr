@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { WppConnectProvider } from '../../../adapters/wppconnect/wppconnect.provider.js';
 import { WebhookSignatureError } from '../../../core/errors/provider-error.js';
-import type { WebhookRequest } from '../../../core/providers/provider.interface.js';
 
 function makeProvider(fetchImpl?: typeof fetch, webhookSecret?: string) {
   return new WppConnectProvider({

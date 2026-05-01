@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ProviderApiError } from '../../../core/errors/provider-error.js';
 import { WppClient } from '../../../adapters/wppconnect/wppconnect.client.js';
 
 function mockFetch(response: {
@@ -8,7 +7,7 @@ function mockFetch(response: {
   body?: unknown;
   throwError?: Error;
 }) {
-  return vi.fn(async () => {
+  return vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => {
     if (response.throwError) throw response.throwError;
     const status = response.status ?? 200;
     const ok = response.ok ?? (status >= 200 && status < 300);
