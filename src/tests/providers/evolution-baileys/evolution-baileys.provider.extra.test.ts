@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { EvolutionProvider } from '../../../adapters/evolution/evolution.provider.js';
+import { EvolutionProvider } from '../../../adapters/evolution-baileys/evolution-baileys.provider.js';
 import {
   WebhookSignatureError,
   WebhookValidationError,

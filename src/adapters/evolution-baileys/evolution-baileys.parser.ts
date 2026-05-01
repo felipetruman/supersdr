@@ -10,7 +10,7 @@ import type {
   EvoMessageUpdate,
   EvoMessageUpsert,
   EvoWebhookPayload,
-} from './evolution.schemas.js';
+} from './evolution-baileys.schemas.js';
 
 /**
  * Extrai o número do JID. Ex: "5547988887777@s.whatsapp.net" → "5547988887777"
@@ -90,7 +90,7 @@ function buildMessage(payload: EvoMessageUpsert): NormalizedMessage {
 
   return {
     providerMessageId: data.key.id,
-    provider: 'evolution',
+    provider: 'evolution-baileys',
     providerInstanceId: instance,
     direction: fromMe ? 'outbound' : 'inbound',
     type,
@@ -156,7 +156,7 @@ function buildStatus(
 
   return {
     providerMessageId: messageId,
-    provider: 'evolution',
+    provider: 'evolution-baileys',
     providerInstanceId: payload.instance,
     status,
     timestamp: new Date(),

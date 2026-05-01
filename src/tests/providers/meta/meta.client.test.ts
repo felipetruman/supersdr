@@ -1,12 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { EvolutionClient } from '../../../adapters/evolution/evolution.client.js';
+import { MetaClient } from '../../../adapters/meta/meta.client.js';
 import { ProviderApiError } from '../../../core/errors/provider-error.js';
 
 function makeClient(fetchImpl: typeof fetch) {
-  return new EvolutionClient({
-    baseUrl: 'https://evo.test',
-    instance: 'inst-1',
-    apiKey: 'key-abc',
+  return new MetaClient({
+    phoneNumberId: '123',
+    accessToken: 'token',
     fetchImpl,
   });
 }
@@ -29,10 +28,14 @@ function errResponse(status: number, body: unknown): Response {
   } as unknown as Response;
 }
 
-describe('EvolutionClient', () => {
-  it('envia texto e retorna SendResult', async () => {
+describe('MetaClient', () => {
+  it('envia mensagem de texto e retorna providerMessageId', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ key: { id: 'evo-1' } }),
+      okResponse({
+        messaging_product: 'whatsapp',
+        contacts: [{ input: '5547', wa_id: '5547' }],
+        messages: [{ id: 'wamid.TXT' }],
+      }),
     ) as unknown as typeof fetch;
 
     const result = await makeClient(fetchImpl).sendMessage('5547', {
@@ -40,61 +43,62 @@ describe('EvolutionClient', () => {
       text: 'oi',
     });
 
-    expect(result.providerMessageId).toBe('evo-1');
+    expect(result.providerMessageId).toBe('wamid.TXT');
     expect(result.acceptedAt).toBeInstanceOf(Date);
 
     const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0];
-    expect(url).toBe('https://evo.test/message/sendText/inst-1');
-    expect((init as RequestInit).headers).toMatchObject({ apikey: 'key-abc' });
+    expect(url).toContain('/v21.0/123/messages');
+    expect((init as RequestInit).method).toBe('POST');
     const body = JSON.parse((init as RequestInit).body as string);
-    expect(body).toEqual({ number: '5547', text: 'oi' });
+    expect(body.type).toBe('text');
+    expect(body.text.body).toBe('oi');
   });
 
-  it('envia texto com quoted quando replyToMessageId presente', async () => {
+  it('inclui context quando replyToMessageId presente', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ key: { id: 'q' } }),
+      okResponse({ messages: [{ id: 'x' }] }),
     ) as unknown as typeof fetch;
 
     await makeClient(fetchImpl).sendMessage('5547', {
       type: 'text',
       text: 'reply',
-      replyToMessageId: 'orig-id',
+      replyToMessageId: 'wamid.ORIG',
     });
 
     const body = JSON.parse(
       ((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
         .calls[0][1] as RequestInit).body as string,
     );
-    expect(body.quoted).toEqual({ key: { id: 'orig-id' } });
+    expect(body.context).toEqual({ message_id: 'wamid.ORIG' });
   });
 
-  it.each(['image', 'video'] as const)(
-    'envia mídia %s no endpoint sendMedia',
+  it.each(['image', 'audio', 'video'] as const)(
+    'envia mídia tipo %s com link e caption',
     async (type) => {
       const fetchImpl = vi.fn().mockResolvedValue(
-        okResponse({ key: { id: 'm' } }),
+        okResponse({ messages: [{ id: 'm-' + type }] }),
       ) as unknown as typeof fetch;
 
       await makeClient(fetchImpl).sendMessage('5547', {
         type,
         url: 'https://x/file',
-        caption: 'cap',
+        caption: 'legenda',
       } as never);
 
-      const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
-      expect(url).toBe('https://evo.test/message/sendMedia/inst-1');
-      const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.mediatype).toBe(type);
-      expect(body.media).toBe('https://x/file');
-      expect(body.caption).toBe('cap');
+      const body = JSON.parse(
+        ((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
+          .calls[0][1] as RequestInit).body as string,
+      );
+      expect(body.type).toBe(type);
+      expect(body[type].link).toBe('https://x/file');
+      expect(body[type].caption).toBe('legenda');
     },
   );
 
-  it('envia document com fileName', async () => {
+  it('envia document com filename', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ key: { id: 'd' } }),
+      okResponse({ messages: [{ id: 'doc' }] }),
     ) as unknown as typeof fetch;
 
     await makeClient(fetchImpl).sendMessage('5547', {
@@ -107,50 +111,34 @@ describe('EvolutionClient', () => {
       ((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
         .calls[0][1] as RequestInit).body as string,
     );
-    expect(body.fileName).toBe('f.pdf');
-  });
-
-  it('envia áudio no endpoint sendWhatsAppAudio', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ key: { id: 'a' } }),
-    ) as unknown as typeof fetch;
-
-    await makeClient(fetchImpl).sendMessage('5547', {
-      type: 'audio',
-      url: 'https://x/a.ogg',
-    });
-
-    const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0];
-    expect(url).toBe('https://evo.test/message/sendWhatsAppAudio/inst-1');
-    const body = JSON.parse((init as RequestInit).body as string);
-    expect(body.audio).toBe('https://x/a.ogg');
+    expect(body.document.filename).toBe('f.pdf');
   });
 
   it('envia location', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ key: { id: 'l' } }),
+      okResponse({ messages: [{ id: 'loc' }] }),
     ) as unknown as typeof fetch;
 
     await makeClient(fetchImpl).sendMessage('5547', {
       type: 'location',
       latitude: -26.9,
       longitude: -49.0,
-      name: 'BNU',
+      name: 'Blumenau',
       address: 'SC',
     });
 
-    const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0];
-    expect(url).toBe('https://evo.test/message/sendLocation/inst-1');
-    const body = JSON.parse((init as RequestInit).body as string);
-    expect(body.latitude).toBe(-26.9);
-    expect(body.name).toBe('BNU');
+    const body = JSON.parse(
+      ((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
+        .calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.type).toBe('location');
+    expect(body.location.latitude).toBe(-26.9);
+    expect(body.location.name).toBe('Blumenau');
   });
 
-  it('lança ProviderApiError em resposta não-ok', async () => {
+  it('lança ProviderApiError quando resposta não-ok', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      errResponse(401, { error: 'unauthorized' }),
+      errResponse(400, { error: { message: 'bad' } }),
     ) as unknown as typeof fetch;
 
     await expect(
@@ -158,14 +146,14 @@ describe('EvolutionClient', () => {
     ).rejects.toBeInstanceOf(ProviderApiError);
   });
 
-  it('lança ProviderApiError quando response não tem key.id', async () => {
+  it('lança ProviderApiError quando response não tem messages[0].id', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      okResponse({ status: 'ok' }),
+      okResponse({ messaging_product: 'whatsapp', messages: [] }),
     ) as unknown as typeof fetch;
 
     await expect(
       makeClient(fetchImpl).sendMessage('5547', { type: 'text', text: 'x' }),
-    ).rejects.toThrowError(/missing key\.id/);
+    ).rejects.toThrowError(/missing message id/);
   });
 
   it('lida com body vazio na resposta', async () => {
@@ -192,5 +180,24 @@ describe('EvolutionClient', () => {
     await expect(
       makeClient(fetchImpl).sendMessage('5547', { type: 'text', text: 'x' }),
     ).rejects.toBeInstanceOf(ProviderApiError);
+  });
+
+  it('respeita baseUrl e graphApiVersion customizados', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      okResponse({ messages: [{ id: 'v' }] }),
+    ) as unknown as typeof fetch;
+
+    const client = new MetaClient({
+      phoneNumberId: '999',
+      accessToken: 't',
+      baseUrl: 'https://custom.api',
+      graphApiVersion: 'v20.0',
+      fetchImpl,
+    });
+    await client.sendMessage('5547', { type: 'text', text: 'x' });
+
+    const url = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    expect(url).toBe('https://custom.api/v20.0/999/messages');
   });
 });

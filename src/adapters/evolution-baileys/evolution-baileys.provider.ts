@@ -17,9 +17,9 @@ import type {
 import {
   EvolutionClient,
   type EvolutionClientConfig,
-} from './evolution.client.js';
-import { parseEvolutionPayload } from './evolution.parser.js';
-import { evoWebhookSchema } from './evolution.schemas.js';
+} from './evolution-baileys.client.js';
+import { parseEvolutionPayload } from './evolution-baileys.parser.js';
+import { evoWebhookSchema } from './evolution-baileys.schemas.js';
 
 export interface EvolutionProviderConfig extends EvolutionClientConfig {
   /**
@@ -30,7 +30,7 @@ export interface EvolutionProviderConfig extends EvolutionClientConfig {
 }
 
 export class EvolutionProvider implements WhatsAppProvider {
-  readonly name: ProviderName = 'evolution';
+  readonly name: ProviderName = 'evolution-baileys';
   private readonly client: EvolutionClient;
 
   constructor(private readonly config: EvolutionProviderConfig) {
@@ -44,7 +44,7 @@ export class EvolutionProvider implements WhatsAppProvider {
     const received = Array.isArray(headerKey) ? headerKey[0] : headerKey;
 
     if (received !== this.config.webhookApiKey) {
-      throw new WebhookSignatureError('evolution');
+      throw new WebhookSignatureError('evolution-baileys');
     }
   }
 
@@ -63,7 +63,7 @@ export class EvolutionProvider implements WhatsAppProvider {
       if (body?.event && knownButUnsupported.includes(body.event)) {
         return [];
       }
-      throw new WebhookValidationError('evolution', result.error.flatten());
+      throw new WebhookValidationError('evolution-baileys', result.error.flatten());
     }
     return parseEvolutionPayload(result.data);
   }

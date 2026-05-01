@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseEvolutionPayload } from '../../../adapters/evolution/evolution.parser.js';
-import { evoWebhookSchema } from '../../../adapters/evolution/evolution.schemas.js';
+import { parseEvolutionPayload } from '../../../adapters/evolution-baileys/evolution-baileys.parser.js';
+import { evoWebhookSchema } from '../../../adapters/evolution-baileys/evolution-baileys.schemas.js';
 
 function upsert(messageContent: Record<string, unknown>, opts: Partial<{ fromMe: boolean; pushName: string; id: string }> = {}) {
   return {
@@ -27,7 +27,7 @@ describe('parseEvolutionPayload', () => {
     expect(events).toHaveLength(1);
     if (events[0].kind !== 'message') throw new Error();
     expect(events[0].data).toMatchObject({
-      provider: 'evolution',
+      provider: 'evolution-baileys',
       providerMessageId: 'EVO_MSG_1',
       providerInstanceId: 'comercial-01',
       direction: 'inbound',

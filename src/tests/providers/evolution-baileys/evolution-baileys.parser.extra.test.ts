@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseEvolutionPayload } from '../../../adapters/evolution/evolution.parser.js';
+import { parseEvolutionPayload } from '../../../adapters/evolution-baileys/evolution-baileys.parser.js';
 
 const baseUpsert = (message: Record<string, unknown>, extra = {}) => ({
   event: 'messages.upsert' as const,
