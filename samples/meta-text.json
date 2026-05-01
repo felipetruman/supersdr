@@ -1,0 +1,32 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5547888888888",
+              "phone_number_id": "1234567890"
+            },
+            "contacts": [
+              { "profile": { "name": "Felipe Tester" }, "wa_id": "5547999999999" }
+            ],
+            "messages": [
+              {
+                "from": "5547999999999",
+                "id": "wamid.SAMPLE_TEXT_001",
+                "timestamp": "1714579200",
+                "type": "text",
+                "text": { "body": "Oi, quero saber sobre o produto X" }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

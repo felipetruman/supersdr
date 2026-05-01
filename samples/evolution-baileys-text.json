@@ -1,0 +1,15 @@
+{
+  "event": "messages.upsert",
+  "instance": "demo",
+  "data": {
+    "key": {
+      "remoteJid": "5547999999999@s.whatsapp.net",
+      "fromMe": false,
+      "id": "EVO_SAMPLE_TEXT_001"
+    },
+    "pushName": "Felipe Tester",
+    "message": { "conversation": "Olá via Evolution Baileys!" },
+    "messageType": "conversation",
+    "messageTimestamp": 1714579260
+  }
+}
