@@ -11,3 +11,4 @@ coverage
 .husky/_
 .pnpm-store
 package-lock.json
+package-lock.json
