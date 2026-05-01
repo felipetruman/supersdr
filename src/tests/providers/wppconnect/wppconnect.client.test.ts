@@ -7,7 +7,7 @@ function mockFetch(response: {
   body?: unknown;
   throwError?: Error;
 }) {
-  return vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => {
+  return vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => {
     if (response.throwError) throw response.throwError;
     const status = response.status ?? 200;
     const ok = response.ok ?? (status >= 200 && status < 300);
