@@ -50,3 +50,14 @@ export class UnsupportedFeatureError extends ProviderError {
     this.name = 'UnsupportedFeatureError';
   }
 }
+
+export class ProviderNotFoundError extends ProviderError {
+  constructor(name: string, instanceId: string) {
+    super(
+      `Provider not registered: ${name}:${instanceId}`,
+      name,
+      'PROVIDER_NOT_FOUND',
+    );
+    this.name = 'ProviderNotFoundError';
+  }
+}

@@ -1,3 +1,4 @@
+import { ProviderNotFoundError } from '../errors/provider-error.js';
 import type { ProviderName } from '../types/message.js';
 import type { WhatsAppProvider } from '../providers/provider.interface.js';
 
@@ -19,7 +20,7 @@ export class ProviderRegistry {
   get(name: ProviderName, instanceId: string): WhatsAppProvider {
     const provider = this.providers.get(this.key(name, instanceId));
     if (!provider) {
-      throw new Error(`Provider not registered: ${name}:${instanceId}`);
+      throw new ProviderNotFoundError(name, instanceId);
     }
     return provider;
   }

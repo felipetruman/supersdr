@@ -3,7 +3,7 @@
  * Todo adapter (Meta, Evolution, WPPConnect, Z-API) converte PARA esses tipos.
  */
 
-export type ProviderName = 'meta' | 'evolution-baileys' | 'wppconnect' | 'zapi';
+export type ProviderName = 'meta' | 'evolution-baileys' | 'evolution-go' | 'wppconnect' | 'zapi';
 
 export type MessageDirection = 'inbound' | 'outbound';
 
