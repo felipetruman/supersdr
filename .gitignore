@@ -10,3 +10,4 @@ coverage
 *.tsbuildinfo
 .husky/_
 .pnpm-store
+package-lock.json
