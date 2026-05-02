@@ -1,8 +1,5 @@
-import { ProviderApiError } from '../../core/errors/provider-error.js';
-import type {
-  OutboundMessage,
-  SendResult,
-} from '../../core/types/outbound.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../core/errors/provider-error.js';
+import type { OutboundMessage, SendResult } from '../../core/types/outbound.js';
 
 export interface EvolutionClientConfig {
   /** URL base do servidor Evolution. Ex: https://evo.meusdr.com */
@@ -36,10 +33,7 @@ export class EvolutionClient {
     this.timeoutMs = config.timeoutMs ?? 15_000;
   }
 
-  async sendMessage(
-    to: string,
-    message: OutboundMessage,
-  ): Promise<SendResult> {
+  async sendMessage(to: string, message: OutboundMessage): Promise<SendResult> {
     const { endpoint, body } = this.buildRequest(to, message);
     const url = `${this.config.baseUrl}/${endpoint}/${this.config.instance}`;
 
@@ -103,10 +97,7 @@ export class EvolutionClient {
     };
   }
 
-  private buildRequest(
-    to: string,
-    message: OutboundMessage,
-  ): { endpoint: string; body: unknown } {
+  private buildRequest(to: string, message: OutboundMessage): { endpoint: string; body: unknown } {
     const number = to;
 
     switch (message.type) {
@@ -156,6 +147,14 @@ export class EvolutionClient {
             address: message.address,
           },
         };
+
+      default: {
+        const _exhaustive: never = message;
+        throw new UnsupportedFeatureError(
+          'evolution',
+          `outbound message type "${(_exhaustive as { type: string }).type}"`,
+        );
+      }
     }
   }
 }

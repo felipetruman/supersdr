@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { WppClient } from '../../../adapters/wppconnect/wppconnect.client.js';
-import { ProviderApiError } from '../../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../../core/errors/provider-error.js';
 
 function makeClient(fetchImpl: typeof fetch) {
   return new WppClient({
@@ -31,13 +31,13 @@ describe('WppClient — gaps', () => {
     ).rejects.toBeInstanceOf(ProviderApiError);
   });
 
-  it('lança ProviderApiError no exhaustive default (tipo inválido)', async () => {
+  it('lança UnsupportedFeatureError no exhaustive default (tipo inválido)', async () => {
     const fetchImpl = vi.fn() as unknown as typeof fetch;
     await expect(
       makeClient(fetchImpl).sendMessage('5547', {
         type: 'invalid-type',
       } as never),
-    ).rejects.toBeInstanceOf(ProviderApiError);
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 
   it('extrai providerMessageId quando id é objeto _serialized', async () => {
