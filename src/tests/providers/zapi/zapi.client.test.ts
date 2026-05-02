@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ZapiClient } from '../../../adapters/zapi/zapi.client.js';
-import { ProviderApiError } from '../../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../../core/errors/provider-error.js';
 
 function makeClient(fetchImpl: typeof fetch) {
   return new ZapiClient({
@@ -158,5 +158,14 @@ describe('ZapiClient — sendMessage', () => {
         text: 'x',
       }),
     ).rejects.toBeInstanceOf(ProviderApiError);
+  });
+});
+
+describe('ZapiClient — exhaustive default', () => {
+  it('lança UnsupportedFeatureError para tipo de mensagem inválido', async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    await expect(
+      makeClient(fetchImpl).sendMessage('5547', { type: 'invalid-type' } as never),
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 });

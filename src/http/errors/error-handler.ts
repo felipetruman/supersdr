@@ -70,6 +70,10 @@ export function httpErrorHandler(
 
   // 5) Feature não suportada → 422
   if (err instanceof UnsupportedFeatureError) {
+    request.log.warn(
+      { provider: err.provider, feature: err.message },
+      'unsupported feature requested',
+    );
     reply
       .code(422)
       .send(toBody('UNSUPPORTED_FEATURE', err.message, err.provider));

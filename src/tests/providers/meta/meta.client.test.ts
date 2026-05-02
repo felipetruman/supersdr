@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MetaClient } from '../../../adapters/meta/meta.client.js';
-import { ProviderApiError } from '../../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../../core/errors/provider-error.js';
 
 function makeClient(fetchImpl: typeof fetch) {
   return new MetaClient({
@@ -199,5 +199,14 @@ describe('MetaClient', () => {
     const url = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0][0];
     expect(url).toBe('https://custom.api/v20.0/999/messages');
+  });
+});
+
+describe('MetaClient — exhaustive default', () => {
+  it('lança UnsupportedFeatureError para tipo de mensagem inválido', async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    await expect(
+      makeClient(fetchImpl).sendMessage('5547', { type: 'invalid-type' } as never),
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 });

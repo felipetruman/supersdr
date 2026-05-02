@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EvolutionGoClient } from '../../../adapters/evolution-go/evolution-go.client.js';
-import { ProviderApiError } from '../../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../../core/errors/provider-error.js';
 
 function makeClient(fetchImpl: typeof fetch) {
   return new EvolutionGoClient({
@@ -213,5 +213,14 @@ describe('EvolutionGoClient', () => {
     await expect(
       makeClient(fetchImpl).sendMessage('5547', { type: 'text', text: 'x' }),
     ).rejects.toBeInstanceOf(ProviderApiError);
+  });
+});
+
+describe('EvolutionGoClient — exhaustive default', () => {
+  it('lança UnsupportedFeatureError para tipo de mensagem inválido', async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    await expect(
+      makeClient(fetchImpl).sendMessage('5547', { type: 'invalid-type' } as never),
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 });
