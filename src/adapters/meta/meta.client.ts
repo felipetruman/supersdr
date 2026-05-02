@@ -15,6 +15,8 @@ export interface MetaClientConfig {
   fetchImpl?: typeof fetch;
   /** Base URL — default: https://graph.facebook.com */
   baseUrl?: string;
+  /** Timeout em ms — default: 15_000 */
+  timeoutMs?: number;
 }
 
 interface MetaSendResponse {
@@ -30,11 +32,13 @@ export class MetaClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
   private readonly version: string;
+  private readonly timeoutMs: number;
 
   constructor(private readonly config: MetaClientConfig) {
     this.baseUrl = config.baseUrl ?? 'https://graph.facebook.com';
     this.fetchImpl = config.fetchImpl ?? fetch;
     this.version = config.graphApiVersion ?? 'v21.0';
+    this.timeoutMs = config.timeoutMs ?? 15_000;
   }
 
   async sendMessage(
@@ -44,14 +48,30 @@ export class MetaClient {
     const body = this.buildBody(to, message);
     const url = `${this.baseUrl}/${this.version}/${this.config.phoneNumberId}/messages`;
 
-    const res = await this.fetchImpl(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.config.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
+
+    let res: Response;
+    try {
+      res = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.config.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+    } catch (err) {
+      throw new ProviderApiError(
+        'meta',
+        0,
+        `Meta indisponível: ${(err as Error).message}`,
+        err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
 
     const text = await res.text();
     let json: unknown;

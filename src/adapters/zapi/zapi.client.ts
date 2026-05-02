@@ -23,6 +23,8 @@ export interface ZapiClientConfig {
   baseUrl?: string;
   /** fetch injetável para testes */
   fetchImpl?: typeof fetch;
+  /** Timeout em ms — default: 15_000 */
+  timeoutMs?: number;
 }
 
 interface ZapiSendResponse {
@@ -36,10 +38,12 @@ const DEFAULT_BASE_URL = 'https://api.z-api.io';
 export class ZapiClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly timeoutMs: number;
 
   constructor(private readonly cfg: ZapiClientConfig) {
     this.baseUrl = cfg.baseUrl ?? DEFAULT_BASE_URL;
     this.fetchImpl = cfg.fetchImpl ?? fetch;
+    this.timeoutMs = cfg.timeoutMs ?? 15_000;
   }
 
   async sendMessage(
@@ -116,6 +120,9 @@ export class ZapiClient {
   ): Promise<SendResult> {
     const url = this.buildUrl(endpoint);
 
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
+
     let response: Response;
     try {
       response = await this.fetchImpl(url, {
@@ -125,9 +132,12 @@ export class ZapiClient {
           'Client-Token': this.cfg.clientToken,
         },
         body: JSON.stringify(stripUndefined(body)),
+        signal: ctrl.signal,
       });
     } catch (cause) {
       throw new ProviderApiError('zapi', 0, 'Falha de rede ao chamar Z-API', cause);
+    } finally {
+      clearTimeout(timer);
     }
 
     const rawText = await response.text();

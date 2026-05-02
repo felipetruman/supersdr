@@ -13,6 +13,8 @@ export interface EvolutionClientConfig {
   apiKey: string;
   /** Override pra testes */
   fetchImpl?: typeof fetch;
+  /** Timeout em ms — default: 15_000 */
+  timeoutMs?: number;
 }
 
 interface EvoSendResponse {
@@ -27,9 +29,11 @@ interface EvoSendResponse {
  */
 export class EvolutionClient {
   private readonly fetchImpl: typeof fetch;
+  private readonly timeoutMs: number;
 
   constructor(private readonly config: EvolutionClientConfig) {
     this.fetchImpl = config.fetchImpl ?? fetch;
+    this.timeoutMs = config.timeoutMs ?? 15_000;
   }
 
   async sendMessage(
@@ -39,14 +43,30 @@ export class EvolutionClient {
     const { endpoint, body } = this.buildRequest(to, message);
     const url = `${this.config.baseUrl}/${endpoint}/${this.config.instance}`;
 
-    const res = await this.fetchImpl(url, {
-      method: 'POST',
-      headers: {
-        apikey: this.config.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
+
+    let res: Response;
+    try {
+      res = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          apikey: this.config.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+    } catch (err) {
+      throw new ProviderApiError(
+        'evolution',
+        0,
+        `Evolution indisponível: ${(err as Error).message}`,
+        err,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
 
     const text = await res.text();
     let json: unknown;
