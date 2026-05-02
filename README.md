@@ -143,8 +143,16 @@ pnpm dev
 ### 4. Healthcheck
 
 ```bash
+# Liveness — app rodando
 curl http://localhost:3000/health
+
+# Providers registrados
 curl http://localhost:3000/health/providers
+
+# Readiness probe (verifica conectividade com o banco via SELECT 1)
+curl http://localhost:3000/health/ready
+# → 200 { status: "ready", db: { kind: "up" } }
+# → 503 { status: "unready", db: { kind: "down", error: "..." } } se DB indisponível
 ```
 
 ## Banco de dados
@@ -356,6 +364,30 @@ Evita duplicação quando o mesmo webhook é reenviado pelo provedor.
 - manter o core isolado de detalhes específicos de cada API
 - equilibrar persistência estruturada com flexibilidade para payloads diferentes
 - integrar classificação sem impactar o tempo de resposta do webhook
+
+## Limitações conhecidas (decisões conscientes para escopo da prova)
+
+### Registry em memória — single-pod
+
+`ProviderRegistry` mantém um `Map` em memória inicializado no boot a partir de variáveis de ambiente (`src/bootstrap.ts`). Funciona bem em deploy single-instance. Para escalar horizontal (vários pods/réplicas) seria necessário um store compartilhado (Postgres com row-per-instance, Redis, etc) para que registrar/atualizar provider em runtime fosse propagado entre instâncias. Hoje, qualquer mudança exige restart de todos os pods.
+
+### WPPConnect: signature plain-string, não criptográfica
+
+WPPConnect-server não emite assinatura HMAC nativa; o adapter compara um header (`x-webhook-secret`) por igualdade simples. Segurança real depende de:
+
+- TLS no canal (HTTPS sempre)
+- segredo forte e rotacionado
+- restrição de IP no reverse proxy quando possível
+
+Meta usa HMAC-SHA256 com `crypto.timingSafeEqual` (`src/adapters/meta/meta.signature.ts`). Os demais providers (Evolution Baileys/Go, Z-API) usam tokens em headers — comparações plain-string protegidas pelo TLS.
+
+### Classificação de intenção — fire-and-forget sem retry
+
+`IntentService.classifyInBackground` dispara a classificação fora do ciclo de request para não atrasar o ACK do webhook (Meta exige <5s). Trade-off: se a chamada ao LLM falhar (timeout, 429, crash), o resultado é perdido sem recovery. Para produção crítica seria necessário queue persistente (BullMQ, pg-boss, SQS). Aceitável para MVP/demonstração.
+
+### `ProviderName` é union literal fechado
+
+Já documentado em [§ Trade-off do `ProviderName`](#trade-off-do-providername-decisão-consciente).
 
 ## Uso de IA
 
