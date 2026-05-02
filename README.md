@@ -414,14 +414,44 @@ Já documentado em [§ Trade-off do `ProviderName`](#trade-off-do-providername-d
 
 ## Uso de IA
 
-IA foi utilizada como ferramenta de produtividade para:
+Este projeto foi desenvolvido com Claude (Anthropic) como copiloto ativo em todas as fases. Relato honesto de como a IA foi usada — e onde o julgamento humano prevaleceu.
 
-- acelerar estruturação inicial da arquitetura
-- gerar rascunhos de implementação
-- revisar casos de teste
-- refinar documentação
+### Como a IA ajudou
 
-Todo output gerado com apoio de IA foi revisado, ajustado e validado manualmente no contexto do projeto.
+**Arquitetura e design de contrato**
+
+A IA foi usada para discutir trade-offs antes de escrever qualquer linha de código: Adapter Pattern vs. Strategy, union literal fechado (`ProviderName`) vs. `string` aberto, in-memory fallback vs. falha rápida sem banco. Esses debates produziram decisões conscientes — não defaults — documentadas em cada seção de "Limitações conhecidas".
+
+**Scaffolding dos adapters**
+
+Cada adapter segue a mesma estrutura de 4 arquivos (`schemas.ts`, `parser.ts`, `client.ts`, `provider.ts`). A IA gerou os rascunhos do segundo e terceiro adapter a partir do primeiro, o que acelerou a consistência do padrão. O parsing de cada provider (Meta `entry/changes`, Evolution `data/key`, Z-API `instanceId/momment`) foi revisado manualmente contra a documentação oficial e payloads reais.
+
+**Cobertura de testes**
+
+A IA sugeriu casos de borda que eu não teria coberto imediatamente: payload com `entry` vazio no Meta, `fromMe: true` no Evolution-Baileys, mensagem de grupo no Z-API, mensagem de status (status update) vs. mensagem de texto. Isso elevou a cobertura para 323 testes com 86%+ de linhas.
+
+**HMAC e segurança**
+
+O cálculo de `crypto.timingSafeEqual` para evitar timing attacks na verificação de assinatura Meta foi sugerido pela IA. Validei contra a documentação da Meta Cloud API e mantive.
+
+**Classificação de intenção**
+
+O design de um factory OpenAI-compatible que suporta múltiplos providers (Gemini, Groq, Ollama, OpenRouter) com um único adapter foi proposto pela IA. Eu ajustei os defaults por provider (modelos, base URLs, timeout) e adicionei o modo mock para CI sem custo.
+
+**Documentação e trade-offs**
+
+A IA ajudou a estruturar a documentação das limitações conscientes (registry em memória, fire-and-forget sem retry, `ProviderName` fechado). O texto final foi reescrito para refletir o raciocínio real do projeto, não um template genérico.
+
+### Onde o julgamento humano prevaleceu
+
+- Decisão de manter `ProviderName` como union literal (a IA sugeriu `string` para "mais flexibilidade" — rejeitado porque type-safety vale mais aqui)
+- Estrutura da tabela `message_events` com colunas auxiliares desnormalizadas (`from_phone`, `text_content`) para queries rápidas sem precisar extrair do JSONB
+- Escolha de não usar uma fila persistente para classificação de intenção (fire-and-forget é suficiente para MVP; adicionar BullMQ seria over-engineering para o escopo)
+- Identificação de que o CLAUDE.md do projeto estava desatualizado (dizia que `schema.ts` e `seed.ts` não existiam — ambos existiam)
+
+### Postura geral
+
+Usar IA como ferramenta de produtividade significa: iterar rápido, revisar com atenção, rejeitar o que não faz sentido e entender cada linha que fica no repositório. O histórico de commits reflete isso — 8 PRs com escopo granular, mensagens descritivas e decisões rastreáveis.
 
 ## Entregáveis da prova
 
