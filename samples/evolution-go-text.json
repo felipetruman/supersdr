@@ -1,0 +1,22 @@
+{
+  "event": "messages.upsert",
+  "instance": "minha-instancia-go",
+  "data": {
+    "key": {
+      "remoteJid": "5547999999999@s.whatsapp.net",
+      "fromMe": false,
+      "id": "3EB0GOTEST00001"
+    },
+    "pushName": "Ana Evolution Go",
+    "message": {
+      "conversation": "Oi, quero saber sobre o produto X"
+    },
+    "messageType": "conversation",
+    "messageTimestamp": 1714579200
+  },
+  "destination": "5547888888888@s.whatsapp.net",
+  "date_time": "2024-05-01T10:00:00.000Z",
+  "sender": "5547999999999@s.whatsapp.net",
+  "server_url": "http://localhost:8080",
+  "apikey": "test-api-key"
+}

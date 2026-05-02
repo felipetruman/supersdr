@@ -1,0 +1,19 @@
+{
+  "event": "onmessage",
+  "session": "minha-sessao",
+  "id": "false_5547999999999@c.us_3EB0WPP0001",
+  "type": "chat",
+  "body": "Oi, quero saber sobre o produto X",
+  "from": "5547999999999@c.us",
+  "to": "5547888888888@c.us",
+  "fromMe": false,
+  "isGroupMsg": false,
+  "notifyName": "Carlos WPP",
+  "sender": {
+    "id": "5547999999999@c.us",
+    "pushname": "Carlos WPP",
+    "name": "Carlos WPP"
+  },
+  "timestamp": 1714579200,
+  "t": 1714579200
+}

@@ -290,17 +290,40 @@ Payloads de exemplo estão em:
 
 - `samples/meta-text.json`
 - `samples/evolution-baileys-text.json`
+- `samples/evolution-go-text.json`
+- `samples/wppconnect-text.json`
 - `samples/zapi-text.json`
 
-Exemplo de chamada:
+Exemplos de chamada (em modo in-memory, sem assinatura obrigatória):
 
 ```bash
+# Meta
 curl -X POST http://localhost:3000/webhooks/meta/default \
   -H 'content-type: application/json' \
   --data @samples/meta-text.json
+
+# Evolution Baileys
+curl -X POST http://localhost:3000/webhooks/evolution-baileys/default \
+  -H 'content-type: application/json' \
+  --data @samples/evolution-baileys-text.json
+
+# Evolution Go
+curl -X POST http://localhost:3000/webhooks/evolution-go/minha-instancia-go \
+  -H 'content-type: application/json' \
+  --data @samples/evolution-go-text.json
+
+# WPPConnect
+curl -X POST http://localhost:3000/webhooks/wppconnect/minha-sessao \
+  -H 'content-type: application/json' \
+  --data @samples/wppconnect-text.json
+
+# Z-API
+curl -X POST http://localhost:3000/webhooks/zapi/SUA_INSTANCIA \
+  -H 'content-type: application/json' \
+  --data @samples/zapi-text.json
 ```
 
-> Para Meta e outros providers com validação real de assinatura, o payload precisa respeitar os headers esperados pelo adapter quando o fluxo completo estiver sendo exercitado.
+> Cada provider só é registrado quando suas variáveis de ambiente estão definidas no `.env`. Configure pelo menos um provider antes de testar. Veja `.env.example` para todas as variáveis disponíveis.
 
 ## Como adicionar um novo provedor
 
