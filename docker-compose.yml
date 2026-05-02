@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: supersdr-postgres
+    environment:
+      POSTGRES_USER: supersdr
+      POSTGRES_PASSWORD: supersdr
+      POSTGRES_DB: supersdr
+    ports:
+      - '55432:5432'
+    volumes:
+      - supersdr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U supersdr -d supersdr']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  supersdr_pgdata:

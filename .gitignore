@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+*.log
+.DS_Store
+.idea
+.vscode
+*.tsbuildinfo
+.husky/_
+.pnpm-store
+package-lock.json
+package-lock.json
+*.bak
+*-discovery.txt
