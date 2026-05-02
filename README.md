@@ -143,8 +143,16 @@ pnpm dev
 ### 4. Healthcheck
 
 ```bash
+# Liveness — app rodando
 curl http://localhost:3000/health
+
+# Providers registrados
 curl http://localhost:3000/health/providers
+
+# Readiness probe (verifica conectividade com o banco via SELECT 1)
+curl http://localhost:3000/health/ready
+# → 200 { status: "ready", db: { kind: "up" } }
+# → 503 { status: "unready", db: { kind: "down", error: "..." } } se DB indisponível
 ```
 
 ## Banco de dados
