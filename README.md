@@ -151,7 +151,7 @@ curl http://localhost:3000/health/providers
 
 # Readiness probe (verifica conectividade com o banco via SELECT 1)
 curl http://localhost:3000/health/ready
-# → 200 { status: "ready", db: { kind: "up" } }
+# → 200 { status: "ready", db: { kind: "ok" } }
 # → 503 { status: "unready", db: { kind: "down", error: "..." } } se DB indisponível
 ```
 
@@ -461,6 +461,10 @@ Para submissão final, além do código funcional, este projeto deve ser acompan
 - README atualizado
 - vídeo de apresentação de até 10 minutos
 
+Evidências de execução com provas reais (HTTP traces, queries no banco, classificação Gemini):
+
+- [`docs/prova-execucao-evidencias.md`](docs/prova-execucao-evidencias.md)
+
 ## Status de validação
 
 | Verificação | Status |
@@ -473,6 +477,6 @@ Para submissão final, além do código funcional, este projeto deve ser acompan
 
 ## Observações finais
 
-- `src/index.ts` está minimalista e o ponto de entrada real da aplicação é `src/bootstrap.ts`
+- o ponto de entrada real da aplicação é `src/bootstrap.ts`; `src/index.ts` expõe a API pública da biblioteca (`buildServer`, `ProviderRegistry`, tipos canônicos)
 - o projeto foi estruturado para priorizar clareza, extensibilidade e pragmatismo
 - a solução não depende de um único provedor e pode crescer com novos adapters
