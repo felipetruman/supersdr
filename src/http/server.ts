@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import sensible from '@fastify/sensible';
+import type { Sql } from 'postgres';
 import { httpErrorHandler } from './errors/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { webhookRoutes } from './routes/webhooks.js';
@@ -11,6 +12,8 @@ export interface BuildServerDeps {
   registry: ProviderRegistry;
   repository: MessageRepository;
   intentService?: IntentService;
+  /** Opcional: quando presente, /health/ready faz SELECT 1. */
+  sql?: Sql;
   logger?: boolean | object;
 }
 
@@ -47,7 +50,7 @@ export function buildServer(deps: BuildServerDeps): FastifyInstance {
 
   app.setErrorHandler(httpErrorHandler);
 
-  app.register(healthRoutes({ registry: deps.registry }));
+  app.register(healthRoutes({ registry: deps.registry, sql: deps.sql }));
   app.register(
     webhookRoutes({
       registry: deps.registry,

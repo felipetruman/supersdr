@@ -10,6 +10,7 @@ import { IntentService } from './core/services/intent.service.js';
 import { createIntentClassifier } from './adapters/intent/factory.js';
 import type { MessageRepository } from './core/repositories/message-repository.js';
 import type { IntentRepository } from './core/repositories/intent-repository.js';
+import type { Sql } from 'postgres';
 
 // Providers
 import { MetaProvider } from './adapters/meta/meta.provider.js';
@@ -22,6 +23,7 @@ interface RepoBundle {
   message: MessageRepository;
   intent: IntentRepository;
   kind: 'postgres' | 'in-memory';
+  sql?: Sql;
 }
 
 function buildRepositories(): RepoBundle {
@@ -31,6 +33,7 @@ function buildRepositories(): RepoBundle {
       message: new PostgresMessageRepository(sql),
       intent: new PostgresIntentRepository(sql),
       kind: 'postgres',
+      sql,
     };
   }
   return {
@@ -124,6 +127,7 @@ async function main(): Promise<void> {
     registry,
     repository: repos.message,
     intentService,
+    sql: repos.sql,
   });
 
   const port = Number(process.env.PORT ?? 3000);
