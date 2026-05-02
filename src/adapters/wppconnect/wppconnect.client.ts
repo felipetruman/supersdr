@@ -1,4 +1,4 @@
-import { ProviderApiError } from '../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../core/errors/provider-error.js';
 import type { OutboundMessage, SendResult } from '../../core/types/outbound.js';
 
 export interface WppClientConfig {
@@ -81,11 +81,9 @@ export class WppClient {
         break;
 
       default: {
-        // exhaustive check
         const _exhaustive: never = message;
-        throw new ProviderApiError(
+        throw new UnsupportedFeatureError(
           'wppconnect',
-          400,
           `Tipo de mensagem não suportado: ${JSON.stringify(_exhaustive)}`,
         );
       }

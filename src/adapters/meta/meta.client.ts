@@ -1,8 +1,5 @@
-import { ProviderApiError } from '../../core/errors/provider-error.js';
-import type {
-  OutboundMessage,
-  SendResult,
-} from '../../core/types/outbound.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../core/errors/provider-error.js';
+import type { OutboundMessage, SendResult } from '../../core/types/outbound.js';
 
 export interface MetaClientConfig {
   /** ID do número (não o WABA ID) */
@@ -41,10 +38,7 @@ export class MetaClient {
     this.timeoutMs = config.timeoutMs ?? 15_000;
   }
 
-  async sendMessage(
-    to: string,
-    message: OutboundMessage,
-  ): Promise<SendResult> {
+  async sendMessage(to: string, message: OutboundMessage): Promise<SendResult> {
     const body = this.buildBody(to, message);
     const url = `${this.baseUrl}/${this.version}/${this.config.phoneNumberId}/messages`;
 
@@ -63,12 +57,7 @@ export class MetaClient {
         signal: ctrl.signal,
       });
     } catch (err) {
-      throw new ProviderApiError(
-        'meta',
-        0,
-        `Meta indisponível: ${(err as Error).message}`,
-        err,
-      );
+      throw new ProviderApiError('meta', 0, `Meta indisponível: ${(err as Error).message}`, err);
     } finally {
       clearTimeout(timer);
     }
@@ -93,12 +82,7 @@ export class MetaClient {
     const parsed = json as MetaSendResponse;
     const messageId = parsed.messages?.[0]?.id;
     if (!messageId) {
-      throw new ProviderApiError(
-        'meta',
-        res.status,
-        'Meta API response missing message id',
-        json,
-      );
+      throw new ProviderApiError('meta', res.status, 'Meta API response missing message id', json);
     }
 
     return {
@@ -153,6 +137,16 @@ export class MetaClient {
             address: message.address,
           },
         };
+
+      default: {
+        // Defesa runtime: protege contra cast forçado (`as any`) ou expansão futura
+        // do union OutboundMessage sem cobertura aqui.
+        const _exhaustive: never = message;
+        throw new UnsupportedFeatureError(
+          'meta',
+          `outbound message type "${(_exhaustive as { type: string }).type}"`,
+        );
+      }
     }
   }
 }

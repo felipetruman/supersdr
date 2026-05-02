@@ -2,36 +2,42 @@
 
 ## Obrigatório antes de enviar
 
-- [x] README completo e coerente com o código atual
+- [x] README completo e coerente com o código atual (380 linhas)
 - [x] projeto sobe com `pnpm install` e `pnpm dev`
-- [x] webhook funcionando para pelo menos 2 providers (Meta, Evolution Baileys, Z-API — 3 testados)
+- [x] webhook funcionando para pelo menos 2 providers (5 implementados: Meta, Evolution Baileys, Evolution Go, WPPConnect, Z-API)
 - [x] normalização retornando formato único interno (`received`, `persisted`, `deduped`)
 - [x] tratamento de erro demonstrável:
   - [x] provider desconhecido → `404 PROVIDER_NOT_FOUND`
   - [x] payload malformado → `400 WEBHOOK_PAYLOAD_INVALID`
   - [x] assinatura inválida → `401 WEBHOOK_SIGNATURE_INVALID`
+  - [x] feature não suportada → `422 UNSUPPORTED_FEATURE`
+  - [x] falha upstream do provider → `502 PROVIDER_UPSTREAM_ERROR`
 - [x] banco funcionando com `pnpm db:up` + `pnpm db:migrate`
+- [x] readiness probe (`GET /health/ready` faz `SELECT 1`)
 - [x] `.env.example` completo e sem secret real
 - [ ] vídeo de até 10 minutos gravado
-- [ ] repositório público no GitHub (atualmente privado)
+- [ ] repositório público no GitHub (atualmente PRIVATE — precisa virar PUBLIC antes de submeter)
 
 ## Diferenciais opcionais
 
 - [x] idempotência demonstrada (mesmo webhook enviado 2x → `deduped: 1`)
-- [ ] mostrar classificação real com LLM (mock funciona; real precisa de API key segura/rotacionada)
-- [x] incluir diagrama simples do fluxo (`docs/diagrams/architecture-flow.md`)
-- [x] cobertura de testes rodada e acima do threshold
-- [x] testes com payloads simulados convincentes (3 providers × samples)
+- [x] classificação de intenção via LLM (mock default; OpenAI-compatible suporta groq/openai/gemini/ollama/openrouter/custom)
+- [x] diagrama do fluxo (`docs/diagrams/architecture-flow.md`)
+- [x] cobertura de testes acima do threshold (lines 86.82% / threshold 80%)
+- [x] testes com payloads simulados convincentes (5 providers × samples)
+- [x] auditoria técnica completa documentada (`docs/auditoria-prova-tecnica-vs-implementacao.md`)
 
 ## Riscos que podem prejudicar a avaliação
 
-- [x] ~~README vazio/desatualizado~~ → README completo com 362 linhas
+- [x] ~~README vazio/desatualizado~~ → README completo (380 linhas), sincronizado com código
 - [x] ~~build quebrado~~ → `pnpm build` passa
-- [x] ~~instruções de setup confusas~~ → README tem seção "Como rodar" detalhada
+- [x] ~~instruções de setup confusas~~ → seção "Como rodar" detalhada
 - [x] ~~dependência de secret real sem fallback~~ → fallback in-memory + mock classifier
-- [x] ~~inconsistência entre documentação e código~~ → README reflete estado real
+- [x] ~~inconsistência entre documentação e código~~ → README + AGENTS + CLAUDE.md alinhados
+- [x] ~~scripts `db:*` quebrados~~ → schema.ts + seed.ts criados (PR #5)
+- [x] ~~clients HTTP sem timeout~~ → AbortController 15s default (PR #5)
 - [ ] vídeo ausente (ainda não gravado)
-- [x] ~~cobertura abaixo do threshold~~ → cobertura agora passa: 87.01% lines
+- [ ] repo PRIVATE (precisa ser público pra submissão)
 
 ## Comandos de verificação rápida
 
@@ -42,6 +48,14 @@ pnpm typecheck
 pnpm test
 pnpm test:coverage
 pnpm build
+
+# Smoke test ponta-a-ponta
+pnpm db:up && pnpm db:migrate
+DATABASE_URL=postgres://supersdr:supersdr@localhost:55432/supersdr pnpm dev
+# Em outro shell:
+curl -s http://localhost:3000/health
+curl -s http://localhost:3000/health/ready
+curl -s http://localhost:3000/health/providers
 ```
 
 ## Vídeo / entregáveis
@@ -49,30 +63,42 @@ pnpm build
 - [ ] Vídeo curto (até 10 min) mostrando:
   - [ ] Visão geral da solução
   - [ ] Fluxo de recebimento e normalização
-  - [ ] Decisões técnicas relevantes
-  - [ ] Diferenciais implementados
+  - [ ] Decisões técnicas relevantes (Adapter + Registry, Repository, IntentClassifier port)
+  - [ ] Diferenciais implementados (5 providers, LLM real, idempotência, readiness probe)
 - [ ] Link do repositório público
 - [ ] Link do vídeo (Google Drive ou YouTube público)
 
-## Status da validação (2026-05-01)
+## Status da validação (2026-05-02 — pós PR #5)
 
 | Verificação | Status | Detalhe |
 |-------------|--------|---------|
-| `pnpm lint` | ✅ | 0 errors, 37 warnings |
+| `pnpm lint` | ✅ | passa (warnings de estilo aceitáveis) |
 | `pnpm typecheck` | ✅ | sem erros |
-| `pnpm test` | ✅ | 314 passed, 4 skipped |
-| `pnpm test:coverage` | ✅ | lines 87.01%, statements 85.71%, functions 82.38%, branches 81% |
+| `pnpm test` | ✅ | 319 passed, 4 skipped (32 arquivos) |
+| `pnpm test:coverage` | ✅ | lines 86.82%, statements 85.33%, functions 80.72%, branches 81.36% (todos acima do threshold) |
 | `pnpm build` | ✅ | gera `dist/` |
 | `pnpm dev` | ✅ | sobe na porta 3000 |
-| Health check | ✅ | `GET /health` → ok |
-| Webhook Meta | ✅ | HMAC-SHA256, `received:1, persisted:1` |
-| Webhook Evolution | ✅ | apikey header, `received:1, persisted:1` |
-| Webhook Z-API | ✅ | Client-Token header, `received:1, persisted:1` |
+| `drizzle-kit check` | ✅ | schema válido |
+| Liveness `GET /health` | ✅ | `{ status: 'ok' }` |
+| Readiness `GET /health/ready` | ✅ | `SELECT 1` quando DB ativo; 503 se cair |
+| `GET /health/providers` | ✅ | lista provedores registrados |
+| Webhook Meta | ✅ | HMAC-SHA256 timing-safe, `received:1, persisted:1` |
+| Webhook Evolution Baileys | ✅ | apikey header, `received:1, persisted:1` |
+| Webhook Evolution Go | ✅ | apikey + instance header |
+| Webhook WPPConnect | ✅ | Bearer token + opt webhook secret |
+| Webhook Z-API | ✅ | Client-Token header |
 | Idempotência | ✅ | mesmo payload 2x → `deduped:1` |
 | Erro: provider desconhecido | ✅ | `404 PROVIDER_NOT_FOUND` |
 | Erro: payload malformado | ✅ | `400 WEBHOOK_PAYLOAD_INVALID` |
 | Erro: assinatura inválida | ✅ | `401 WEBHOOK_SIGNATURE_INVALID` |
+| Erro: feature não suportada | ✅ | `422 UNSUPPORTED_FEATURE` |
+| Erro: provider upstream | ✅ | `502 PROVIDER_UPSTREAM_ERROR` |
 | `pnpm db:up` | ✅ | container Postgres rodando |
 | `pnpm db:migrate` | ✅ | 001_init + 002_add_intent aplicadas |
+| `pnpm db:seed` | ✅ | 2 eventos sample inseridos |
+| `pnpm db:generate` | ✅ | schema.ts presente |
+| `pnpm db:studio` | ✅ | Drizzle Studio abre |
 | `.env.example` | ✅ | completo, sem secrets reais |
-| Cobertura | ⚠️ | 78% lines (threshold: 80%) |
+| Cobertura | ✅ | acima de todos os thresholds |
+| Classificação LLM (mock) | ✅ | 7 categorias, fire-and-forget background |
+| Classificação LLM (real) | ⚠️ | não testada nesta validação (precisa API key) |

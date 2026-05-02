@@ -1,4 +1,4 @@
-import { ProviderApiError } from '../../core/errors/provider-error.js';
+import { ProviderApiError, UnsupportedFeatureError } from '../../core/errors/provider-error.js';
 import type {
   OutboundMessage,
   SendResult,
@@ -101,9 +101,8 @@ export class ZapiClient {
 
       default: {
         const _exhaustive: never = message;
-        throw new ProviderApiError(
+        throw new UnsupportedFeatureError(
           'zapi',
-          400,
           `Tipo de mensagem não suportado: ${(_exhaustive as { type: string }).type}`,
         );
       }
