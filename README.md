@@ -353,15 +353,25 @@ Fora essa única linha, o restante do sistema continua igual porque consome apen
 
 ## Funcionalidades implementadas
 
-- [x] recebimento de webhook multi-provedor
-- [x] normalização para formato único interno
-- [x] pelo menos 2 provedores implementados
-- [x] extensibilidade via adapter pattern
-- [x] tratamento básico de erros
-- [x] persistência em PostgreSQL
-- [x] fallback in-memory para dev/teste
-- [x] classificação de intenção com LLM/mock
-- [x] testes automatizados
+### Obrigatórios
+
+- [x] recebimento de webhook multi-provedor (`POST /webhooks/:provider/:instanceId`)
+- [x] normalização para formato único interno (`NormalizedEvent`)
+- [x] **5 provedores implementados** (prova exigia ≥ 2): Meta, Evolution-Baileys, Evolution-Go, WPPConnect, Z-API
+- [x] extensibilidade via Adapter Pattern — novo provider = 4 arquivos + 1 linha no core
+- [x] tratamento de erros com HTTP codes coerentes (400 / 401 / 404 / 422 / 502 / 500)
+- [x] persistência em PostgreSQL (Drizzle ORM, 2 migrations)
+- [x] fallback in-memory para dev/teste (sem `DATABASE_URL`)
+- [x] idempotência por `provider_message_id` (constraint única composta)
+- [x] readiness probe (`GET /health/ready` executa `SELECT 1`, retorna 503 se DB cair)
+- [x] variáveis de ambiente para chaves sensíveis (`.env.example` sem secrets)
+
+### Diferenciais (opcionais — todos entregues)
+
+- [x] **Fluxo visual** — diagrama Mermaid em [`docs/diagrams/architecture-flow.md`](docs/diagrams/architecture-flow.md)
+- [x] **Testes automatizados** — 319 testes, cobertura 86.82% linhas / 85.33% statements / 80.72% funções / 81.36% branches (threshold 80%)
+- [x] **Teste com provedor real** — Evolution-Go validado localmente com traces HTTP reais (ver [`docs/prova-execucao-evidencias.md`](docs/prova-execucao-evidencias.md))
+- [x] **Implementação completa de LLM** — classificação de intenção funcional com Gemini (Google AI), suporte a OpenAI-compatible (Groq, Ollama, OpenRouter) e modo mock para CI
 
 ## Decisões técnicas principais
 
