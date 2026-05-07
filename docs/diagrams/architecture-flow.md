@@ -10,7 +10,7 @@ flowchart TD
 
   D --> E[verifyWebhook<br/>HMAC / token / apikey]
   E --> F[parseWebhook<br/>schema + parser do provider]
-  F --> G[NormalizedEvent[]<br/>formato canônico interno]
+  F --> G["NormalizedEvent[]<br/>formato canônico interno"]
 
   G --> H[MessageRepository]
   H --> I{DATABASE_URL?}
