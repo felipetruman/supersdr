@@ -64,7 +64,7 @@
     "@fastify/sensible": "^6.0.4",
     "@google/generative-ai": "^0.24.1",
     "drizzle-orm": "^0.45.2",
-    "fastify": "^5.8.5",
+    "fastify": "^5.12.1",
     "pg": "^8.20.0",
     "postgres": "^3.4.9",
     "zod": "^4.4.1"
